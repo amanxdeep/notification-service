@@ -1,4 +1,4 @@
-package com.chatgpt.notification_service;
+package com.self.notificationService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
