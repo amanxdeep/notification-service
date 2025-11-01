@@ -1,4 +1,4 @@
-package com.chatgpt.notification_service;
+package com.self.notificationService;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
