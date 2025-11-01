@@ -1,4 +1,4 @@
 package com.self.notificationService.channel;
 
-public interface NotificationChannel {
+public interface NotificationChannelService {
 }
