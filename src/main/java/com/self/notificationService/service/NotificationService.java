@@ -25,10 +25,22 @@ public class NotificationService {
      */
 
     public NotificationResponse enqueueNotification(NotificationRequest request) {
+
+        NotificationResponse existingLog = isAlreadyProcessed(request);
+        if (existingLog != null) return existingLog;
         return null;
     }
 
-   // public void enqueueNotification(NotificationRequest request) {
+    private NotificationResponse isAlreadyProcessed(NotificationRequest request) {
+        Optional<NotificationLog> notificationLogOptional = notificationLogRepository.findByRequestId(request.getRequestId());
+        if(notificationLogOptional.isPresent()){
+            NotificationLog existingLog = notificationLogOptional.get();
+            return new NotificationResponse(existingLog.getNotificationId(), existingLog.getState());
+        }
+        return null;
+    }
+
+    // public void enqueueNotification(NotificationRequest request) {
      //   kafkaProducer.sendEvent("notification_requests", request);
     //}
 
@@ -47,7 +59,7 @@ public class NotificationService {
         Optional<NotificationLog> notificationLogOptional = notificationLogRepository.findById(id);
         String status;
         if(notificationLogOptional.isPresent()) {
-            status = notificationLogOptional.get().getStatus();
+            status = notificationLogOptional.get().getState();
         } else {
             status = "NOT_FOUND";
         }

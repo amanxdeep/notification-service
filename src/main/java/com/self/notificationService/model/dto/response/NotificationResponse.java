@@ -1,5 +1,9 @@
 package com.self.notificationService.model.dto.response;
 
+import lombok.AllArgsConstructor;
+
+@AllArgsConstructor
 public class   NotificationResponse {
-    private String string;
+    private String id;
+    private String status;
 }

@@ -14,11 +14,13 @@ public class NotificationLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String requestId;
 
+    private String notificationId;
     private Long userId;
     private String eventId;
     private String type;
     private String channel;
-    private String status;
+    private String state;
     private LocalDateTime createdAt = LocalDateTime.now();
 }
