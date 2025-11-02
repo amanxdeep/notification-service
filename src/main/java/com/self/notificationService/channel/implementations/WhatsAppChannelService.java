@@ -16,4 +16,8 @@ public class WhatsAppChannelService implements NotificationChannelService {
     public NotificationChannel getChannelType() {
         return NotificationChannel.WHATSAPP;
     }
+
+    private String getMessageBody(NotificationRequest notificationRequest) {
+        return null;
+    }
 }

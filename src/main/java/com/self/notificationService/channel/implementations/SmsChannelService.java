@@ -5,7 +5,7 @@ import com.self.notificationService.enums.NotificationChannel;
 import com.self.notificationService.model.dto.request.NotificationRequest;
 import com.self.notificationService.model.dto.response.NotificationSendResult;
 
-public class SmaChannelService implements NotificationChannelService {
+public class SmsChannelService implements NotificationChannelService {
     @Override
     public NotificationSendResult send(NotificationRequest request) {
         return null;
@@ -14,5 +14,9 @@ public class SmaChannelService implements NotificationChannelService {
     @Override
     public NotificationChannel getChannelType() {
         return NotificationChannel.SMS;
+    }
+
+    private String getMessageBody(NotificationRequest notificationRequest) {
+        return null;
     }
 }
