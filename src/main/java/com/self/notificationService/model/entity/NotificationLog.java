@@ -1,16 +1,13 @@
 package com.self.notificationService.model.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Data
-public class NotificationLog {
+public class NotificationLog extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,6 +18,8 @@ public class NotificationLog {
     private String eventId;
     private String type;
     private String channel;
+    private String provider;
+    private String providerNotificationId;
     private String state;
-    private LocalDateTime createdAt = LocalDateTime.now();
+
 }
