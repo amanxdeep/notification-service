@@ -16,4 +16,12 @@ public class EmailChannelService implements NotificationChannelService {
     public NotificationChannel getChannelType() {
         return NotificationChannel.EMAIL;
     }
+
+    private String getSubject(NotificationRequest notificationRequest) {
+        return null;
+    }
+
+    private String getMessageBody(NotificationRequest notificationRequest) {
+        return null;
+    }
 }
