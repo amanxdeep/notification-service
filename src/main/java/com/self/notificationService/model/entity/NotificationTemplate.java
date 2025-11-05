@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Entity
 @Data
-public class NotificationTemplate {
+public class NotificationTemplate extends  BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
