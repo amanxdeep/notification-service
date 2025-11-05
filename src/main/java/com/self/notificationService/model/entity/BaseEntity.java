@@ -11,16 +11,21 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 public class BaseEntity {
 
+    //createAt represents the time when the entity is created
     private LocalDateTime createdAt;
+    //updateAt represents the time when the entity is updated
     private LocalDateTime updatedAt;
 
-    @PrePersist
+    @PrePersist//this annotation means that this method will be called before the entity is persisted
+    //this method will be called before the entity is persisted()
+    //will set the createdAt and updatedAt to the current date and time automatically
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now();//.now() returns the current date and time
         updatedAt = LocalDateTime.now();
     }
 
-    @PreUpdate
+    @PreUpdate//this annotation means that this method will be called before the entity is updated
+
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }

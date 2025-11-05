@@ -3,7 +3,7 @@ package com.self.notificationService.factory;
 
 import com.self.notificationService.channel.NotificationChannelService;
 import com.self.notificationService.channel.implementations.EmailChannelService;
-import com.self.notificationService.channel.implementations.SmaChannelService;
+import com.self.notificationService.channel.implementations.SmsChannelService;
 import com.self.notificationService.channel.implementations.WhatsAppChannelService;
 import com.self.notificationService.enums.NotificationChannel;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class ChannelFactory {
     private final Map<NotificationChannel, NotificationChannelService> channelMap;
 
     @Autowired
-    public ChannelFactory(EmailChannelService emailChannelService, SmaChannelService smsChannelService,
+    public ChannelFactory(EmailChannelService emailChannelService, SmsChannelService smsChannelService,
                           WhatsAppChannelService whatsAppChannelService) {
         channelMap = new  HashMap<>();
         channelMap.put(NotificationChannel.EMAIL, emailChannelService);
