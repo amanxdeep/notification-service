@@ -1,8 +1,10 @@
 package com.self.notificationService.service;
 
+import com.self.notificationService.enums.NotificationChannel;
 import com.self.notificationService.exceptions.ResourceNotFoundException;
 import com.self.notificationService.exceptions.ValidationException;
 import com.self.notificationService.model.dto.request.NotificationRequest;
+import com.self.notificationService.model.dto.response.NotificationSendResult;
 import com.self.notificationService.model.entity.NotificationLog;
 import com.self.notificationService.repository.NotificationLogRepository;
 import jakarta.validation.Valid;
@@ -150,6 +152,22 @@ public class NotificationLogService {
         return notificationLogRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("NOTIFICATION NOT FOUND\n"+
                                                                  "Notification with notificationId " + notificationId +" does not exist"));
+    }
+
+    //LOG NOTIFICATION IN THE DATABASE
+    public void logNotification(NotificationRequest request, NotificationSendResult result,
+                                 String notificationId, NotificationChannel channel) {
+        NotificationLog log = new NotificationLog();
+        log.setRequestId(request.getRequestId());
+        log.setNotificationId(notificationId);
+        log.setUserId(request.getUserId());
+        log.setType(request.getType().toString());
+        log.setChannel(channel.toString());
+        log.setProvider(result.getProvider().toString());
+        log.setProviderNotificationId(result.getExternalId());
+        log.setState(result.getStatus().toString());
+
+        notificationLogRepository.save(log);
     }
 
 }
