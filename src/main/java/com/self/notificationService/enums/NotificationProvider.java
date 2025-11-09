@@ -1,7 +1,8 @@
 package com.self.notificationService.enums;
 
 public enum NotificationProvider {
-    AWS,
-    TWILIO,
-    POSTMARK
+    AWS_SES,
+    TWILIO_WHATSAPP,
+    POSTMARK,
+    AWS_SNS
 }

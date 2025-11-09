@@ -10,17 +10,18 @@ import lombok.Data;
 public class EmailDto {
 
     @Email(message = "Invalid email format")
-    @NotBlank(message = "Required email is required")
+    @NotBlank(message = "Receiver email is required")
     private String receiverAddress;
 
-    @NotBlank(message = "Required subject is required")
+    @NotBlank(message = "Email subject is required")
     private String subject;
 
-    @NotBlank(message = "Required body is required")
+    @NotBlank(message = "Email body is required")
     private String body;
 
-    @NotBlank(message = "Required from is required")
+    @NotBlank(message = "Email sender address is required")
     private String fromAddress;
 
+    @NotBlank(message = "Email sender name is required")
     private String fromName;
 }

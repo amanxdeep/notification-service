@@ -20,7 +20,7 @@ public class EmailChannelService implements NotificationChannelService {
 
     @Override
     public NotificationSendResult send(NotificationRequest request) {
-        NotificationProvider provider = NotificationProvider.AWS;
+        NotificationProvider provider = NotificationProvider.AWS_SES;
 
         NotificationProviderService providerService = providerFactory
                 .getProviderService(getChannelType(), provider);

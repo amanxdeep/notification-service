@@ -49,7 +49,7 @@ public class AwsEmailProviderService implements NotificationProviderService {
     @Override
     public NotificationSendResult send(NotificationRequest request) {
         NotificationSendResult result = new NotificationSendResult();
-        result.setProvider(NotificationProvider.AWS);
+        result.setProvider(NotificationProvider.AWS_SES);
 
         try {
             EmailDto emailDto = buildEmailFromRequest(request);
@@ -85,7 +85,7 @@ public class AwsEmailProviderService implements NotificationProviderService {
 
     @Override
     public NotificationProvider getProviderType() {
-        return NotificationProvider.AWS;
+        return NotificationProvider.AWS_SES;
     }
 
     @Override
