@@ -13,7 +13,7 @@ public class TwilioSmsProviderService implements NotificationProviderService {
 
     @Override
     public NotificationProvider getProviderType() {
-        return NotificationProvider.TWILIO;
+        return NotificationProvider.TWILIO_WHATSAPP;
     }
 
     @Override
