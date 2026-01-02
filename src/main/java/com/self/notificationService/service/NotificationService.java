@@ -1,6 +1,7 @@
 package com.self.notificationService.service;
 
 import com.self.notificationService.enums.NotificationChannel;
+import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.exceptions.ResourceNotFoundException;
 import com.self.notificationService.exceptions.ValidationException;
 import com.self.notificationService.factory.ChannelFactory;
@@ -54,7 +55,9 @@ public class NotificationService {
 
             // Log the notification attempt
             String notificationId = UUID.randomUUID().toString();
-            notificationLogService.logNotification(request, result, notificationId, channel);
+            if(loggableEvent(result))
+                notificationLogService.logNotification(request, result, notificationId, channel);
+
             return new NotificationResponse(notificationId, result.getStatus().toString());
 
         } catch (Exception e) {
@@ -93,6 +96,10 @@ public class NotificationService {
             status = "NOT_FOUND";
         }
         return new NotificationStatus(status);
+    }
+
+    private boolean loggableEvent(NotificationSendResult result){
+        return !NotificationRequestStatus.FAILURE.equals(result.getStatus());
     }
 
 }
