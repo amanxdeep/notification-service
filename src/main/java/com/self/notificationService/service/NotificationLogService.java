@@ -164,12 +164,9 @@ public class NotificationLogService {
         log.setUserId(request.getUserId());
         log.setType(request.getType().toString());
         log.setChannel(channel.toString());
+        log.setProvider(result.getProvider().toString());
         log.setProviderNotificationId(result.getExternalId());
         log.setState(result.getStatus().toString());
-
-        if (!ObjectUtils.isEmpty(result.getProvider())) {
-            log.setProvider(result.getProvider().toString());
-        }
 
         notificationLogRepository.save(log);
     }
