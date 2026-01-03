@@ -23,16 +23,16 @@ public class ProviderFactory {
         notificationChannelProviderMap = new HashMap<>();
 
         Map<NotificationProvider, NotificationProviderService> emailProviderMap = new HashMap<>();
-        emailProviderMap.put(NotificationProvider.AWS, awsEmailProviderService);
+        emailProviderMap.put(NotificationProvider.AWS_SES, awsEmailProviderService);
         notificationChannelProviderMap.put(NotificationChannel.EMAIL, emailProviderMap);
 
         Map<NotificationProvider, NotificationProviderService> smsProviderMap = new HashMap<>();
-        smsProviderMap.put(NotificationProvider.AWS, awsSmsProviderService);
-        smsProviderMap.put(NotificationProvider.TWILIO, twilioSmsProviderService);
+        smsProviderMap.put(NotificationProvider.AWS_SES, awsSmsProviderService);
+        smsProviderMap.put(NotificationProvider.TWILIO_WHATSAPP, twilioSmsProviderService);
         notificationChannelProviderMap.put(NotificationChannel.SMS, smsProviderMap);
 
         Map<NotificationProvider, NotificationProviderService> whatsAppProviderMap = new HashMap<>();
-        whatsAppProviderMap.put(NotificationProvider.TWILIO, twilioWhatsAppProviderService);
+        whatsAppProviderMap.put(NotificationProvider.TWILIO_WHATSAPP, twilioWhatsAppProviderService);
         notificationChannelProviderMap.put(NotificationChannel.WHATSAPP, whatsAppProviderMap);
     }
 

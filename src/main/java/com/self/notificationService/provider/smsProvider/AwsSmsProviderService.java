@@ -1,6 +1,74 @@
 package com.self.notificationService.provider.smsProvider;
 
+import com.self.notificationService.enums.NotificationProvider;
+import com.self.notificationService.enums.NotificationRequestStatus;
+import com.self.notificationService.model.dto.SmsDto;
+import com.self.notificationService.model.dto.request.NotificationRequest;
+import com.self.notificationService.model.dto.response.NotificationSendResult;
 import com.self.notificationService.provider.NotificationProviderService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.model.PublishRequest;
+import software.amazon.awssdk.services.sns.model.PublishResponse;
 
+@Service
+@RequiredArgsConstructor
 public class AwsSmsProviderService implements NotificationProviderService {
+
+    private final SnsClient snsClient;
+
+    private String sendSms(String phoneNumber, String message) {
+        PublishRequest publishRequest = PublishRequest.builder()
+                .phoneNumber(phoneNumber)
+                .message(message)
+                .build();
+
+        PublishResponse publishResponse = snsClient.publish(publishRequest);
+        return publishResponse.messageId();
+    }
+
+    private SmsDto buildSmsDtoFromRequest(NotificationRequest request) {
+        String phoneNumber = (String) request.getData().get("receiverPhoneNumber");
+        String message = (String) request.getData().get("message");
+        return SmsDto.builder()
+                .receiverPhoneNumber(phoneNumber)
+                .messageToSend(message)
+                .build();
+    }
+
+
+    @Override
+    public NotificationSendResult send(NotificationRequest request) {
+        NotificationSendResult notificationSendResult = new NotificationSendResult();
+        notificationSendResult.setProvider(getProviderType());
+
+        try {
+            SmsDto smsDto = buildSmsDtoFromRequest(request);
+            String messageId = sendSms(smsDto.getReceiverPhoneNumber(), smsDto.getMessageToSend());
+            notificationSendResult.setStatus(NotificationRequestStatus.SUCCESS);
+            notificationSendResult.setExternalId(messageId);
+        } catch (Exception e) {
+            notificationSendResult.setStatus(NotificationRequestStatus.FAILURE);
+            notificationSendResult.setErrorMessage(e.getMessage());
+        }
+
+
+        return notificationSendResult;
+    }
+
+    @Override
+    public NotificationProvider getProviderType() {
+        return NotificationProvider.AWS_SNS;
+    }
+
+    @Override
+    public Boolean isAvailable() {
+        try {
+            snsClient.getSMSAttributes();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
