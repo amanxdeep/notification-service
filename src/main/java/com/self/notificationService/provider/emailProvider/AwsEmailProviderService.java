@@ -21,7 +21,6 @@ public class AwsEmailProviderService implements NotificationProviderService {
     private final SesClient sesClient;
     private final AwsSesConfig awsSesConfig;
 
-
     private String sendEmail(EmailDto emailDto) {
         SendEmailRequest emailRequest = SendEmailRequest.builder()
                 .destination(Destination.builder()
@@ -57,22 +56,18 @@ public class AwsEmailProviderService implements NotificationProviderService {
 
             result.setStatus(NotificationRequestStatus.SUCCESS);
             result.setExternalId(messageId);
-
-
         } catch (Exception e) {
             result.setStatus(NotificationRequestStatus.FAILURE);
             result.setErrorMessage(e.getMessage());
-
         }
-
         return result;
     }
 
 
     private EmailDto buildEmailFromRequest(NotificationRequest request) {
-        String to = (String) request.getData().get("email");
-        String subject = (String) request.getData().get("subject");
-        String body = (String) request.getData().get("body");
+        String to = (String) request.getData().get(AppConstants.EMAIL);
+        String subject = (String) request.getData().get(AppConstants.SUBJECT);
+        String body = (String) request.getData().get(AppConstants.BODY);
 
         return EmailDto.builder()
                 .receiverAddress(to)
