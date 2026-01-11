@@ -1,5 +1,6 @@
 package com.self.notificationService.provider.smsProvider;
 
+import com.self.notificationService.constants.AppConstants;
 import com.self.notificationService.enums.NotificationProvider;
 import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.model.dto.SmsDto;
@@ -29,8 +30,8 @@ public class AwsSmsProviderService implements NotificationProviderService {
     }
 
     private SmsDto buildSmsDtoFromRequest(NotificationRequest request) {
-        String phoneNumber = (String) request.getData().get("receiverPhoneNumber");
-        String message = (String) request.getData().get("message");
+        String phoneNumber = (String) request.getData().get(AppConstants.RECEIVER_PHONE_NUMBER);
+        String message = (String) request.getData().get(AppConstants.MESSAGE);
         return SmsDto.builder()
                 .receiverPhoneNumber(phoneNumber)
                 .messageToSend(message)
@@ -52,7 +53,6 @@ public class AwsSmsProviderService implements NotificationProviderService {
             notificationSendResult.setStatus(NotificationRequestStatus.FAILURE);
             notificationSendResult.setErrorMessage(e.getMessage());
         }
-
 
         return notificationSendResult;
     }

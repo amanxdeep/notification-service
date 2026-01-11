@@ -9,6 +9,12 @@ public class AppConstants {
 
     // For WhatsApp
     public static final String WHATSAPP_NUMBER = "whatsapp";
+
+    // For SMS
+    public static final String RECEIVER_PHONE_NUMBER = "receiverPhoneNumber";
+
+    // For Messages
     public static final String MESSAGE = "message";
+
 }
 
