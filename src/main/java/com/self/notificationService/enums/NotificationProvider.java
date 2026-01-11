@@ -4,5 +4,6 @@ public enum NotificationProvider {
     AWS_SES,
     TWILIO_WHATSAPP,
     POSTMARK,
-    AWS_SNS
+    AWS_SNS,
+    TWILIO_SMS
 }
