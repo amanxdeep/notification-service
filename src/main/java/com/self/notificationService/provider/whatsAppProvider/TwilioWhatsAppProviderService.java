@@ -24,16 +24,20 @@ public class TwilioWhatsAppProviderService implements NotificationProviderServic
 
     @Override
     public NotificationSendResult send(NotificationRequest request) {
-        NotificationSendResult result = new NotificationSendResult();
-        result.setProvider(getProviderType());
+        MDC.put(LogContextKey.PROVIDER.name(), getProviderType().name());
+
+        NotificationSendResult result = new NotificationSendResult()
+            .setProvider(getProviderType());
 
         try {
             WhatsappDto whatsappDto = buildWhatsAppDtoFromRequest(request);
             String messageSid = sendWhatsAppMessage(whatsappDto);
+
             result.setStatus(NotificationRequestStatus.SUCCESS)
                     .setExternalId(messageSid);
         } catch (Exception e) {
-            log.error("Error sending WhatsApp message: {}", e.getMessage(), e);
+            log.error("Exception while sending WhatsApp message", e);
+
             result.setStatus(NotificationRequestStatus.FAILURE)
                     .setErrorMessage(e.getMessage());
         }

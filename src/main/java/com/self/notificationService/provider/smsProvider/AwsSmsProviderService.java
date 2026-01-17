@@ -1,6 +1,7 @@
 package com.self.notificationService.provider.smsProvider;
 
 import com.self.notificationService.constants.AppConstants;
+import com.self.notificationService.enums.LogContextKey;
 import com.self.notificationService.enums.NotificationProvider;
 import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.model.dto.SmsDto;
@@ -13,6 +14,7 @@ import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.PublishResponse;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AwsSmsProviderService implements NotificationProviderService {
@@ -41,14 +43,18 @@ public class AwsSmsProviderService implements NotificationProviderService {
 
     @Override
     public NotificationSendResult send(NotificationRequest request) {
+        MDC.put(LogContextKey.PROVIDER.name(), getProviderType().name());
+
         NotificationSendResult notificationSendResult = new NotificationSendResult()
                 .setProvider(getProviderType());
         try {
             SmsDto smsDto = buildSmsDtoFromRequest(request);
             String messageId = sendSms(smsDto.getReceiverPhoneNumber(), smsDto.getMessageToSend());
+
             notificationSendResult.setStatus(NotificationRequestStatus.SUCCESS)
                     .setExternalId(messageId);
         } catch (Exception e) {
+            log.error("Exception while sending SMS", e);
             notificationSendResult.setStatus(NotificationRequestStatus.FAILURE)
                     .setErrorMessage(e.getMessage());
         }
@@ -67,6 +73,7 @@ public class AwsSmsProviderService implements NotificationProviderService {
             snsClient.getSMSAttributes();
             return true;
         } catch (Exception e) {
+            log.error("Exception while checking availability", e);
             return false;
         }
     }

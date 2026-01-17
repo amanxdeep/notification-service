@@ -24,17 +24,22 @@ public class TwilioSmsProviderService implements NotificationProviderService {
 
     @Override
     public NotificationSendResult send(NotificationRequest request){
-        NotificationSendResult notificationSendResult = new NotificationSendResult();
-        notificationSendResult.setProvider(getProviderType());
+        MDC.put(LogContextKey.PROVIDER.name(), getProviderType().name());
+
+        NotificationSendResult notificationSendResult = new NotificationSendResult()
+            .setProvider(getProviderType());
 
         try {
             SmsDto smsDto = buildSmsDtoFromRequest(request);
             String messageId = sendSms(smsDto.getReceiverPhoneNumber(), smsDto.getMessageToSend());
-            notificationSendResult.setStatus(NotificationRequestStatus.SUCCESS);
-            notificationSendResult.setExternalId(messageId);
+
+            notificationSendResult.setStatus(NotificationRequestStatus.SUCCESS)
+                .setExternalId(messageId);
         } catch (Exception e) {
-            notificationSendResult.setStatus(NotificationRequestStatus.FAILURE);
-            notificationSendResult.setErrorMessage(e.getMessage());
+            log.error("Exception while sending SMS message", e);
+
+            notificationSendResult.setStatus(NotificationRequestStatus.FAILURE)
+                .setErrorMessage(e.getMessage());
         }
 
         return notificationSendResult;
