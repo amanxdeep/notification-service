@@ -1,5 +1,6 @@
 package com.self.notificationService.service;
 
+import com.self.notificationService.channel.NotificationChannelService;
 import com.self.notificationService.enums.NotificationChannel;
 import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.exceptions.ResourceNotFoundException;
@@ -16,17 +17,20 @@ import com.self.notificationService.model.entity.NotificationLog;
 import com.self.notificationService.repository.NotificationLogRepository;
 import com.self.notificationService.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private final KafkaProducer kafkaProducer;
     private final NotificationLogRepository notificationLogRepository;
     private final UserRepository userRepository;
     private final ChannelFactory channelFactory;
@@ -39,7 +43,7 @@ public class NotificationService {
     public NotificationResponse enqueueNotification(NotificationRequest request) {
 
         NotificationResponse existingLog = isAlreadyProcessed(request);
-        if (existingLog != null) {
+        if (!ObjectUtils.isEmpty(existingLog)) {
             return existingLog;
         }
         return sendNotificationDirectly(request);
@@ -47,10 +51,9 @@ public class NotificationService {
 
     public NotificationResponse sendNotificationDirectly(NotificationRequest request) {
         try {
-            // Default to EMAIL channel for testing
             NotificationChannel channel = NotificationChannel.EMAIL;
 
-            var channelService = channelFactory.getChannel(channel);
+            NotificationChannelService channelService = channelFactory.getChannel(channel);
             NotificationSendResult result = channelService.send(request);
 
             // Log the notification attempt
@@ -60,15 +63,15 @@ public class NotificationService {
 
             return new NotificationResponse(notificationId, result.getStatus().toString());
 
-        } catch (Exception e) {
-
-            return new NotificationResponse(null, "FAILURE: " + e.getMessage());
+        } catch (Exception ex) {
+            log.error("Exception occurred while sending notifictication ", ex.getMessage());
+            return new NotificationResponse(null, NotificationRequestStatus.FAILURE.toString());
         }
     }
 
     private NotificationResponse isAlreadyProcessed(NotificationRequest request) {
         Optional<NotificationLog> notificationLogOptional = notificationLogRepository.findByRequestId(request.getRequestId());
-        if(notificationLogOptional.isPresent()){
+        if(notificationLogOptional.isPresent()) {
             NotificationLog existingLog = notificationLogOptional.get();
             return new NotificationResponse(existingLog.getNotificationId(), existingLog.getState());
         }

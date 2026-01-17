@@ -1,6 +1,7 @@
 package com.self.notificationService.provider.emailProvider;
 import com.self.notificationService.config.AwsSesConfig;
 import com.self.notificationService.constants.AppConstants;
+import com.self.notificationService.enums.LogContextKey;
 import com.self.notificationService.enums.NotificationProvider;
 import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.model.dto.EmailDto;
@@ -8,12 +9,14 @@ import com.self.notificationService.model.dto.request.NotificationRequest;
 import com.self.notificationService.model.dto.response.NotificationSendResult;
 import com.self.notificationService.provider.NotificationProviderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.ses.SesClient;
 import software.amazon.awssdk.services.ses.model.*;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AwsEmailProviderService implements NotificationProviderService {
@@ -47,18 +50,20 @@ public class AwsEmailProviderService implements NotificationProviderService {
 
     @Override
     public NotificationSendResult send(NotificationRequest request) {
-        NotificationSendResult result = new NotificationSendResult();
-        result.setProvider(NotificationProvider.AWS_SES);
+        MDC.put(LogContextKey.PROVIDER.name(), getProviderType().name());
 
+        NotificationSendResult result = new NotificationSendResult();
+        result.setProvider(getProviderType());
         try {
             EmailDto emailDto = buildEmailFromRequest(request);
             String messageId = sendEmail(emailDto);
 
-            result.setStatus(NotificationRequestStatus.SUCCESS);
-            result.setExternalId(messageId);
+            result.setStatus(NotificationRequestStatus.SUCCESS)
+                .setExternalId(messageId);
         } catch (Exception e) {
-            result.setStatus(NotificationRequestStatus.FAILURE);
-            result.setErrorMessage(e.getMessage());
+            log.error("Exception occurred while sending notification", e);
+            result.setStatus(NotificationRequestStatus.FAILURE)
+                .setErrorMessage(e.getMessage());
         }
         return result;
     }
@@ -89,6 +94,7 @@ public class AwsEmailProviderService implements NotificationProviderService {
             sesClient.getSendQuota();
             return true;
         } catch (Exception e) {
+            log.error("Exception while checking availability", e);
             return false;
         }
     }
