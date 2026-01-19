@@ -51,7 +51,7 @@ public class NotificationService {
 
     public NotificationResponse sendNotificationDirectly(NotificationRequest request) {
         try {
-            NotificationChannel channel = NotificationChannel.EMAIL;
+            NotificationChannel channel = determineChannel(request);
 
             NotificationChannelService channelService = channelFactory.getChannel(channel);
             NotificationSendResult result = channelService.send(request);
@@ -67,6 +67,13 @@ public class NotificationService {
             log.error("Exception occurred while sending notifictication ", ex.getMessage());
             return new NotificationResponse(null, NotificationRequestStatus.FAILURE.toString());
         }
+    }
+
+    private NotificationChannel determineChannel(NotificationRequest request) {
+        if (request.getChannel() == null) {
+            throw new ValidationException("Notification channel must be specified in the request");
+        }
+        return request.getChannel();
     }
 
     private NotificationResponse isAlreadyProcessed(NotificationRequest request) {
