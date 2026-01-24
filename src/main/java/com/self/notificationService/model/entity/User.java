@@ -16,7 +16,4 @@ public class User {
     private Long id;
 
     private String name;
-    private String email;
-    private String phone;
-    private String preferencesJson; // e.g. {"email":true,"sms":false}
 }
