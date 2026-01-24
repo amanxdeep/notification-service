@@ -38,7 +38,7 @@ public class EmailChannelService implements NotificationChannelService {
         
         log.info("Processing email notification request. RequestId: {}", request.getId());
 
-        List<ProviderConfig> providers = providerSelectionService.selectProviders(getChannelType());
+        List<ProviderConfig> providers = providerSelectionService.getProviders(getConfigKey());
 
         if (providers.isEmpty()) {
             logger.error("No enabled email providers configured");

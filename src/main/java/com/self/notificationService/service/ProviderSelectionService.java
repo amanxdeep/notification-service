@@ -24,7 +24,7 @@ public class ProviderSelectionService {
      * @param configKey Configuration key for the channel
      * @return List of providers sorted by rank
      */
-    public List<ProviderConfig> selectProviders(ConfigKey configKey) {
+    public List<ProviderConfig> getProviders(ConfigKey configKey) {
         try {
             logger.debug("Fetching provider config using ConfigKey: {}", configKey.name());
 
