@@ -2,6 +2,7 @@ package com.self.notificationService.channel.implementations;
 
 import com.self.notificationService.channel.NotificationChannelService;
 import com.self.notificationService.enums.NotificationChannel;
+import com.self.notificationService.model.ConfigKey;
 import com.self.notificationService.model.dto.request.NotificationRequest;
 import com.self.notificationService.model.dto.response.NotificationSendResult;
 
@@ -21,5 +22,10 @@ public class WhatsAppChannelService implements NotificationChannelService {
 
     private String getMessageBody(NotificationRequest notificationRequest) {
         return null;
+    }
+
+    @Override
+    public ConfigKey getConfigKey() {
+        return ConfigKey.WHATSAPP_PROVIDER_CONFIG;
     }
 }

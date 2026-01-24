@@ -21,13 +21,12 @@ public class ProviderSelectionService {
 
     /**
      * Select providers for a channel based on cached configuration, sorted by rank (enabled providers first)
-     * @param channel Notification channel type
+     * @param configKey Configuration key for the channel
      * @return List of providers sorted by rank
      */
-    public List<ProviderConfig> selectProviders(NotificationChannel channel) {
+    public List<ProviderConfig> selectProviders(ConfigKey configKey) {
         try {
-            ConfigKey configKey = getConfigKeyForChannel(channel);
-            logger.debug("Fetching provider config for channel: {} using ConfigKey: {}", channel.name(), configKey.name());
+            logger.debug("Fetching provider config using ConfigKey: {}", configKey.name());
 
             ChannelProviderConfig channelConfig = configCacheService.get(configKey, ChannelProviderConfig.class);
 
@@ -42,7 +41,7 @@ public class ProviderSelectionService {
                     .collect(Collectors.toList());
 
         } catch (Exception e) {
-            logger.error("Error fetching provider configuration for channel: {}", channel.name(), e);
+            logger.error("Error fetching provider configuration", e);
             return List.of();
         }
     }
@@ -55,17 +54,5 @@ public class ProviderSelectionService {
     public ProviderConfig getPrimaryProvider(NotificationChannel channel) {
         List<ProviderConfig> providers = selectProviders(channel);
         return providers.isEmpty() ? null : providers.get(0);
-    }
-
-    /**
-     * Map NotificationChannel to corresponding ConfigKey
-     */
-    private ConfigKey getConfigKeyForChannel(NotificationChannel channel) {
-        return switch (channel) {
-            case EMAIL -> ConfigKey.EMAIL_PROVIDER_CONFIG;
-            case SMS -> ConfigKey.SMS_PROVIDER_CONFIG;
-            case WHATSAPP -> ConfigKey.WHATSAPP_PROVIDER_CONFIG;
-            default -> throw new IllegalArgumentException("Unsupported channel: " + channel);
-        };
     }
 }

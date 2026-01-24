@@ -7,6 +7,7 @@ import com.self.notificationService.enums.NotificationChannel;
 import com.self.notificationService.enums.NotificationProvider;
 import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.factory.ProviderFactory;
+import com.self.notificationService.model.ConfigKey;
 import com.self.notificationService.model.ProviderConfig;
 import com.self.notificationService.model.dto.request.NotificationRequest;
 import com.self.notificationService.model.dto.response.NotificationSendResult;
@@ -82,6 +83,11 @@ public class EmailChannelService implements NotificationChannelService {
     @Override
     public NotificationChannel getChannelType() {
         return NotificationChannel.EMAIL;
+    }
+
+    @Override
+    public ConfigKey getConfigKey() {
+        return ConfigKey.EMAIL_PROVIDER_CONFIG;
     }
 
 
