@@ -22,11 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailChannelService implements NotificationChannelService {
-
-    private static final Logger logger = LoggerFactory.getLogger(EmailChannelService.class);
 
     private final ProviderFactory providerFactory;
     private final ProviderSelectionService providerSelectionService;
@@ -36,7 +35,7 @@ public class EmailChannelService implements NotificationChannelService {
 
         MDC.put(LogContextKey.CHANNEL.name(), getChannelType().name());
         
-        logger.info("Processing email notification request. RequestId: {}", request.getId());
+        log.info("Processing email notification request. RequestId: {}", request.getId());
 
         List<ProviderConfig> providers = providerSelectionService.selectProviders(getChannelType());
 
@@ -47,12 +46,14 @@ public class EmailChannelService implements NotificationChannelService {
                 .setErrorMessage(ErrorMessage.PROVIDER_NOT_AVAILABLE.getMessage());
         }
 
-        logger.debug("Available email providers: {} providers found", providers.size());
+        log.debug("Available email providers: {} providers found", providers.size());
 
-        // Try each provider in order (fallback mechanism)
         for (ProviderConfig providerConfig : providers) {
             NotificationProvider provider = providerConfig.getProvider();
-            logger.debug("Attempting to send using provider: {} with rank: {}", provider.name(), providerConfig.getRank());
+
+            MDC.put(LogContextKey.PROVIDER.name(), provider.name());
+
+            log.debug("Attempting to send using provider: {} with rank: {}", provider.name(), providerConfig.getRank());
             
             NotificationProviderService providerService = providerFactory
                     .getProviderService(getChannelType(), provider);
@@ -66,15 +67,13 @@ public class EmailChannelService implements NotificationChannelService {
                     return result;
                 }
                 
-                // Provider failed, try next one
-                logger.warn("Provider {} failed to send email, trying next provider. Error: {}", provider.name(), result.getErrorMessage());
+                log.warn("Provider failed to send email, trying next provider. Error: {}", result.getErrorMessage());
             } else {
-                logger.warn("Provider {} is not available or not found", provider.name());
+                log.warn("Provider is not available or not found");
             }
         }
 
-        // All providers failed
-        logger.error("All email providers failed. Unable to send notification for RequestId: {}", request.getId());
+        log.error("All email providers failed. Unable to send notification");
         return new NotificationSendResult()
             .setStatus(NotificationRequestStatus.FAILURE)
             .setErrorMessage(ErrorMessage.PROVIDER_NOT_AVAILABLE.getMessage());
