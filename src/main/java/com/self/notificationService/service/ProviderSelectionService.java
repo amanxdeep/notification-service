@@ -46,13 +46,4 @@ public class ProviderSelectionService {
         }
     }
 
-    /**
-     * Get primary provider (highest priority/lowest rank) for a channel
-     * @param channel Notification channel type
-     * @return Primary provider config or null if none available
-     */
-    public ProviderConfig getPrimaryProvider(NotificationChannel channel) {
-        List<ProviderConfig> providers = selectProviders(channel);
-        return providers.isEmpty() ? null : providers.get(0);
-    }
 }
