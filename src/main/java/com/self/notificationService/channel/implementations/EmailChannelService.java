@@ -15,9 +15,8 @@ import com.self.notificationService.model.dto.response.NotificationSendResult;
 import com.self.notificationService.provider.NotificationProviderService;
 import com.self.notificationService.service.ProviderSelectionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -41,12 +40,16 @@ public class EmailChannelService implements NotificationChannelService {
         List<ProviderConfig> providers = providerSelectionService.getProviders(getConfigKey());
 
         if (providers.isEmpty()) {
-            logger.error("No enabled email providers configured");
+            log.error("No email providers configured");
             return new NotificationSendResult()
                 .setStatus(NotificationRequestStatus.FAILURE)
                 .setErrorMessage(ErrorMessage.PROVIDER_NOT_AVAILABLE.getMessage());
         }
 
+        return sendWithFallback(request, providers);
+    }
+
+    private NotificationSendResult sendWithFallback(NotificationRequest request, List<ProviderConfig> providers) {
         log.debug("Available email providers: {} providers found", providers.size());
 
         for (ProviderConfig providerConfig : providers) {
@@ -59,19 +62,20 @@ public class EmailChannelService implements NotificationChannelService {
             NotificationProviderService providerService = providerFactory
                     .getProviderService(getChannelType(), provider);
 
-            if (!ObjectUtils.isEmpty(providerService) && providerService.isAvailable()) {
-                logger.debug("Provider {} is available, attempting to send", provider.name());
-                NotificationSendResult result = providerService.send(request);
-                
-                if (result.getStatus() == NotificationRequestStatus.SUCCESS) {
-                    logger.info("Email notification sent successfully using provider: {}", provider.name());
-                    return result;
-                }
-                
-                log.warn("Provider failed to send email, trying next provider. Error: {}", result.getErrorMessage());
-            } else {
+            if (ObjectUtils.isEmpty(providerService) || !providerService.isAvailable()) {
                 log.warn("Provider is not available or not found");
+                continue;
             }
+
+            log.debug("Provider is available, attempting to send");
+            NotificationSendResult result = providerService.send(request);
+            
+            if (result.getStatus() == NotificationRequestStatus.SUCCESS) {
+                log.info("Email notification sent successfully");
+                return result;
+            }
+            
+            log.warn("Provider failed to send email, trying next provider. Error: {}", result.getErrorMessage());
         }
 
         log.error("All email providers failed. Unable to send notification");
