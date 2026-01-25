@@ -1,6 +1,7 @@
 package com.self.notificationService.provider.whatsAppProvider;
 
 import com.self.notificationService.config.TwilioConfig;
+import com.self.notificationService.enums.LogContextKey;
 import com.self.notificationService.enums.NotificationProvider;
 import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.model.dto.WhatsappDto;
@@ -13,6 +14,8 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
 @Service

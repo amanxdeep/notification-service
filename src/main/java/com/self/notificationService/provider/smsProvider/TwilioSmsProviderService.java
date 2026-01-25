@@ -1,6 +1,7 @@
 package com.self.notificationService.provider.smsProvider;
 
 import com.self.notificationService.constants.AppConstants;
+import com.self.notificationService.enums.LogContextKey;
 import com.self.notificationService.enums.NotificationProvider;
 import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.model.dto.SmsDto;
@@ -13,6 +14,7 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 
 @Slf4j
