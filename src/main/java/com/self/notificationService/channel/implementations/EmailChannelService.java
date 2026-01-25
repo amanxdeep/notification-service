@@ -57,7 +57,7 @@ public class EmailChannelService implements NotificationChannelService {
 
             MDC.put(LogContextKey.PROVIDER.name(), provider.name());
 
-            log.debug("Attempting to send using provider: {} with rank: {}", provider.name(), providerConfig.getRank());
+            log.debug("Attempting to send with provider rank: {}", provider.name(), providerConfig.getRank());
             
             NotificationProviderService providerService = providerFactory
                     .getProviderService(getChannelType(), provider);
