@@ -35,7 +35,7 @@ public class EmailChannelService implements NotificationChannelService {
 
         MDC.put(LogContextKey.CHANNEL.name(), getChannelType().name());
         
-        log.info("Processing email notification request. RequestId: {}", request.getId());
+        log.info("Processing email notification request.");
 
         List<ProviderConfig> providers = providerSelectionService.getProviders(getConfigKey());
 
@@ -71,7 +71,7 @@ public class EmailChannelService implements NotificationChannelService {
             NotificationSendResult result = providerService.send(request);
             
             if (result.getStatus() == NotificationRequestStatus.SUCCESS) {
-                log.info("Email notification sent successfully");
+                log.info("Notification sent successfully");
                 return result;
             }
             
