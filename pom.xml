@@ -8,8 +8,8 @@
 		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.amanxdeep</groupId>
-	<artifactId>notification-service </artifactId>
+	<groupId>com.axd</groupId>
+	<artifactId>notification-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>notification-service </name>
 	<description>Service to manage notifications</description>
