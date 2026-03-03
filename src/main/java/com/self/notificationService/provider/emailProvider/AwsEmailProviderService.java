@@ -1,4 +1,5 @@
 package com.self.notificationService.provider.emailProvider;
+
 import com.self.notificationService.config.AwsSesConfig;
 import com.self.notificationService.constants.AppConstants;
 import com.self.notificationService.enums.LogContextKey;
@@ -10,7 +11,6 @@ import com.self.notificationService.model.dto.response.NotificationSendResult;
 import com.self.notificationService.provider.NotificationProviderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.ses.SesClient;
@@ -59,11 +59,11 @@ public class AwsEmailProviderService implements NotificationProviderService {
             String messageId = sendEmail(emailDto);
 
             result.setStatus(NotificationRequestStatus.SUCCESS)
-                .setExternalId(messageId);
+                    .setExternalId(messageId);
         } catch (Exception e) {
             log.error("Exception occurred while sending notification", e);
             result.setStatus(NotificationRequestStatus.FAILURE)
-                .setErrorMessage(e.getMessage());
+                    .setErrorMessage(e.getMessage());
         }
         return result;
     }

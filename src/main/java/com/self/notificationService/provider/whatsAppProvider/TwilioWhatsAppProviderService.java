@@ -14,7 +14,6 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +29,7 @@ public class TwilioWhatsAppProviderService implements NotificationProviderServic
         MDC.put(LogContextKey.PROVIDER.name(), getProviderType().name());
 
         NotificationSendResult result = new NotificationSendResult()
-            .setProvider(getProviderType());
+                .setProvider(getProviderType());
 
         try {
             WhatsappDto whatsappDto = buildWhatsAppDtoFromRequest(request);

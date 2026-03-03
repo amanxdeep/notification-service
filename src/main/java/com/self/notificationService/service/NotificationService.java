@@ -6,7 +6,6 @@ import com.self.notificationService.enums.NotificationRequestStatus;
 import com.self.notificationService.exceptions.ResourceNotFoundException;
 import com.self.notificationService.exceptions.ValidationException;
 import com.self.notificationService.factory.ChannelFactory;
-import com.self.notificationService.kafka.KafkaProducer;
 import com.self.notificationService.model.dto.request.NotificationRequest;
 import com.self.notificationService.model.dto.response.NotificationResponse;
 import com.self.notificationService.model.dto.response.NotificationSendResult;
@@ -37,8 +36,8 @@ public class NotificationService {
     private final NotificationLogService notificationLogService;
 
     /**
-     *  Enqueue notification request to Kafka topic.
-     *  it checks if the notification request is already processed or not
+     * Enqueue notification request to Kafka topic.
+     * it checks if the notification request is already processed or not
      */
     public NotificationResponse enqueueNotification(NotificationRequest request) {
 
@@ -58,7 +57,7 @@ public class NotificationService {
 
             // Log the notification attempt
             String notificationId = UUID.randomUUID().toString();
-            if(loggableEvent(result))
+            if (loggableEvent(result))
                 notificationLogService.logNotification(request, result, notificationId, channel);
 
             return new NotificationResponse(notificationId, result.getStatus().toString());
@@ -78,7 +77,7 @@ public class NotificationService {
 
     private NotificationResponse isAlreadyProcessed(NotificationRequest request) {
         Optional<NotificationLog> notificationLogOptional = notificationLogRepository.findByRequestId(request.getRequestId());
-        if(notificationLogOptional.isPresent()) {
+        if (notificationLogOptional.isPresent()) {
             NotificationLog existingLog = notificationLogOptional.get();
             return new NotificationResponse(existingLog.getNotificationId(), existingLog.getState());
         }
@@ -87,20 +86,20 @@ public class NotificationService {
 
 
     /**
-      Retrieve user’s recent notifications from DB.
+     * Retrieve user’s recent notifications from DB.
      */
     public UserNotification getUserNotifications(Long userId) {
-        List<NotificationLog> notificationLogs =  notificationLogRepository.findByUserId(userId);
+        List<NotificationLog> notificationLogs = notificationLogRepository.findByUserId(userId);
         return new UserNotification(notificationLogs);
     }
 
     /**
-      Retrieve specific notification status.
+     * Retrieve specific notification status.
      */
     public NotificationStatus getNotificationStatus(Long id) {
         Optional<NotificationLog> notificationLogOptional = notificationLogRepository.findById(id);
         String status;
-        if(notificationLogOptional.isPresent()) {
+        if (notificationLogOptional.isPresent()) {
             status = notificationLogOptional.get().getState();
         } else {
             status = "NOT_FOUND";
@@ -108,7 +107,7 @@ public class NotificationService {
         return new NotificationStatus(status);
     }
 
-    private boolean loggableEvent(NotificationSendResult result){
+    private boolean loggableEvent(NotificationSendResult result) {
         return !NotificationRequestStatus.FAILURE.equals(result.getStatus());
     }
 

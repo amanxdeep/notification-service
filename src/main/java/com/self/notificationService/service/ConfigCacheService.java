@@ -1,6 +1,17 @@
 package com.self.notificationService.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.self.notificationService.model.ConfigKey;
+import com.self.notificationService.model.entity.ConfigEntity;
+import com.self.notificationService.repository.ConfigRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -8,21 +19,17 @@ import com.self.notificationService.model.ConfigKey;
 public class ConfigCacheService {
 
     private final ConfigRepository configRepository;
-    private final ObjectMappper objectMapper;
-
+    private final ObjectMapper objectMapper;
 
     private volatile Map<String, String> cache = new HashMap<>();
 
-
     public String get(ConfigKey configKey) {
-        return cache.get(buildCacheKey(configKey));
+        return cache.get(buildCacheKey(configKey.getGroup(), configKey.getKey()));
     }
 
-
-    public <T> T get(ConfigKey configKey, Class<T> objectClass) {
+    public <T> T get(ConfigKey configKey, Class<T> objectClass) throws JsonProcessingException {
         String value = get(configKey);
-        T object = objectMapper.readValue(value, objectClass);
-        return object;
+        return objectMapper.readValue(value, objectClass);
     }
 
     public synchronized void refresh() {
@@ -42,7 +49,7 @@ public class ConfigCacheService {
         log.info("Config cache refreshed. Total entries: {}", cache.size());
     }
 
-    private String buildCacheKey(ConfigKey configKey) {
-        return configKey.getGroup() + "." + configKey.getKey();
+    private String buildCacheKey(String group, String key) {
+        return group + "." + key;
     }
 }

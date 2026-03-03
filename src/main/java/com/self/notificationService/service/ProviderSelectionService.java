@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,7 @@ public class ProviderSelectionService {
 
     /**
      * Select providers for a channel based on cached configuration, sorted by rank (enabled providers first)
+     *
      * @param configKey Configuration key for the channel
      * @return List of providers sorted by rank
      */
@@ -31,7 +33,7 @@ public class ProviderSelectionService {
             ChannelProviderConfig channelConfig = configCacheService.get(configKey, ChannelProviderConfig.class);
 
             if (channelConfig == null || channelConfig.getProviders() == null) {
-                logger.warn("No configuration found for channel: {} with ConfigKey: {}", channel.name(), configKey.name());
+                logger.warn("No configuration found with ConfigKey: {}", configKey.name());
                 return List.of();
             }
 

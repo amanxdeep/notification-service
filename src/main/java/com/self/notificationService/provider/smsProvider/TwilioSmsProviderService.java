@@ -13,9 +13,9 @@ import com.twilio.rest.api.v2010.Account;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
@@ -25,23 +25,23 @@ public class TwilioSmsProviderService implements NotificationProviderService {
     private String fromNumber;
 
     @Override
-    public NotificationSendResult send(NotificationRequest request){
+    public NotificationSendResult send(NotificationRequest request) {
         MDC.put(LogContextKey.PROVIDER.name(), getProviderType().name());
 
         NotificationSendResult notificationSendResult = new NotificationSendResult()
-            .setProvider(getProviderType());
+                .setProvider(getProviderType());
 
         try {
             SmsDto smsDto = buildSmsDtoFromRequest(request);
             String messageId = sendSms(smsDto.getReceiverPhoneNumber(), smsDto.getMessageToSend());
 
             notificationSendResult.setStatus(NotificationRequestStatus.SUCCESS)
-                .setExternalId(messageId);
+                    .setExternalId(messageId);
         } catch (Exception e) {
             log.error("Exception while sending SMS message", e);
 
             notificationSendResult.setStatus(NotificationRequestStatus.FAILURE)
-                .setErrorMessage(e.getMessage());
+                    .setErrorMessage(e.getMessage());
         }
 
         return notificationSendResult;

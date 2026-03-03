@@ -10,7 +10,6 @@ import com.self.notificationService.model.dto.response.NotificationSendResult;
 import com.self.notificationService.provider.NotificationProviderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sns.SnsClient;
