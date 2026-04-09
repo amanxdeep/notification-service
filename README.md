@@ -413,7 +413,489 @@ Performance optimization:
 
 ---
 
-## 🗄️ Database Schema
+## � System Architecture Diagrams
+
+### 1. High-Level System Architecture
+Comprehensive overview showing the flow from REST clients through Spring Boot to external services:
+
+```mermaid
+graph TB
+    subgraph "External Clients"
+        Client["REST API Client"]
+    end
+    
+    subgraph "Spring Boot Application"
+        API["NotificationController"]
+        
+        subgraph "Service Layer"
+            NS["NotificationService"]
+            NLS["NotificationLogService"]
+            PSS["ProviderSelectionService"]
+            CCS["ConfigCacheService"]
+        end
+        
+        subgraph "Factory Pattern"
+            CF["ChannelFactory"]
+            PF["ProviderFactory"]
+        end
+        
+        subgraph "Channel Implementations"
+            ECS["EmailChannelService"]
+            SMCS["SmsChannelService"]
+            WACS["WhatsAppChannelService"]
+        end
+        
+        subgraph "Provider Implementations"
+            AWSES["AwsEmailProviderService"]
+            AWSSNS["AwsSmsProviderService"]
+            TWILIO["TwilioSmsProviderService"]
+            TWWA["TwilioWhatsAppProviderService"]
+        end
+        
+        subgraph "Data Access"
+            REPO["Repositories"]
+            NLR["NotificationLogRepository"]
+            UR["UserRepository"]
+            CR["ConfigRepository"]
+            NTR["NotificationTemplateRepository"]
+        end
+    end
+    
+    subgraph "External Services"
+        AWS["AWS Services<br/>SES / SNS"]
+        TWIL["Twilio APIs<br/>SMS / WhatsApp"]
+    end
+    
+    subgraph "Data Storage"
+        DB[("MySQL Database<br/>Notification Logs")]
+        CACHE[("Cache<br/>Provider Config")]
+    end
+    
+    Client -->|REST POST/GET| API
+    API --> NS
+    
+    NS --> CF
+    NS --> NLS
+    NS --> REPO
+    
+    CF --> ECS
+    CF --> SMCS
+    CF --> WACS
+    
+    ECS --> PF
+    SMCS --> PF
+    WACS --> PF
+    
+    PF --> AWSES
+    PF --> AWSSNS
+    PF --> TWILIO
+    PF --> TWWA
+    
+    ECS --> AWSES
+    SMCS --> AWSSNS
+    SMCS --> TWILIO
+    WACS --> TWWA
+    
+    AWSES -->|HTTPS| AWS
+    AWSSNS -->|HTTPS| AWS
+    TWILIO -->|HTTPS| TWIL
+    TWWA -->|HTTPS| TWIL
+    
+    NLS --> NLR
+    PSS --> CCS
+    CCS --> CACHE
+    NLR --> DB
+    UR --> DB
+    CR --> DB
+    NTR --> DB
+```
+
+---
+
+### 2. Notification Sending - Sequence Diagram
+Detailed flow showing the complete request lifecycle including deduplication and provider fallback:
+
+```mermaid
+sequenceDiagram
+    participant Client as REST Client
+    participant Controller as NotificationController
+    participant NotifService as NotificationService
+    participant ChannelFactory as ChannelFactory
+    participant Channel as Channel Service<br/>Email/SMS/WhatsApp
+    participant ProviderFactory as ProviderFactory
+    participant Provider as Provider Service<br/>AWS/Twilio
+    participant LogService as NotificationLogService
+    participant Repo as NotificationLogRepository
+    participant ExtAPI as External API<br/>AWS/Twilio
+    
+    Client->>Controller: POST /send (NotificationRequest)
+    activate Controller
+    Controller->>NotifService: enqueueNotification(request)
+    activate NotifService
+    
+    Note over NotifService: Check for duplicate<br/>using requestId
+    NotifService->>Repo: findByRequestId(requestId)
+    Repo-->>NotifService: Optional<NotificationLog>
+    
+    alt Duplicate Found
+        NotifService-->>Controller: Return existing response
+    else New Request
+        NotifService->>ChannelFactory: getChannel(NotificationChannel)
+        activate ChannelFactory
+        ChannelFactory-->>NotifService: NotificationChannelService
+        deactivate ChannelFactory
+        
+        NotifService->>Channel: send(request)
+        activate Channel
+        
+        Channel->>ProviderFactory: getProvider(channel, provider)
+        activate ProviderFactory
+        ProviderFactory-->>Channel: NotificationProviderService
+        deactivate ProviderFactory
+        
+        Channel->>Provider: send(request)
+        activate Provider
+        Provider->>ExtAPI: HTTPS Request
+        activate ExtAPI
+        ExtAPI-->>Provider: Success/Failure
+        deactivate ExtAPI
+        Provider-->>Channel: NotificationSendResult
+        deactivate Provider
+        
+        Channel-->>NotifService: NotificationSendResult
+        deactivate Channel
+        
+        NotifService->>LogService: logNotification(request, result)
+        activate LogService
+        LogService->>Repo: save(NotificationLog)
+        Repo-->>LogService: Saved entity
+        deactivate LogService
+        
+        NotifService-->>Controller: NotificationResponse
+    end
+    
+    deactivate NotifService
+    Controller-->>Client: GenericResponse<NotificationResponse>
+    deactivate Controller
+```
+
+---
+
+### 3. Factory Pattern & Provider Architecture
+Demonstrates how the factory pattern enables flexible, extensible multi-provider/multi-channel support:
+
+```mermaid
+graph LR
+    subgraph "Factory Pattern Implementation"
+        CF["<b>ChannelFactory</b><br/>Maps: NotificationChannel<br/>→ NotificationChannelService"]
+        EM["<b>EMAIL Channel</b><br/>EmailChannelService"]
+        SM["<b>SMS Channel</b><br/>SmsChannelService"]
+        WA["<b>WHATSAPP Channel</b><br/>WhatsAppChannelService"]
+        
+        CF -->|NotificationChannel.EMAIL| EM
+        CF -->|NotificationChannel.SMS| SM
+        CF -->|NotificationChannel.WHATSAPP| WA
+    end
+    
+    subgraph "Provider Selection & Factory"
+        DIR["Request specifies<br/>Channel & Provider"]
+        PSS["ProviderSelectionService<br/>Fetches config from cache"]
+        PF["<b>ProviderFactory</b><br/>Maps: Channel + Provider<br/>→ NotificationProviderService"]
+        
+        DIR --> PSS
+        PSS --> PF
+    end
+    
+    subgraph "Email Providers"
+        AWSE["AWS SES<br/>AwsEmailProviderService"]
+        PME["Postmark<br/>PostmarkEmailProviderService"]
+        PF -->|AWS_SES| AWSE
+        PF -->|POSTMARK| PME
+    end
+    
+    subgraph "SMS Providers"
+        AWSS["AWS SNS<br/>AwsSmsProviderService"]
+        TWSMS["Twilio SMS<br/>TwilioSmsProviderService"]
+        PF -->|AWS_SNS| AWSS
+        PF -->|TWILIO| TWSMS
+    end
+    
+    subgraph "WhatsApp Providers"
+        TWWA["Twilio WhatsApp<br/>TwilioWhatsAppProviderService"]
+        PF -->|TWILIO_WHATSAPP| TWWA
+    end
+    
+    style CF fill:#4A90E2,color:#fff
+    style PF fill:#7B68EE,color:#fff
+    style DIR fill:#F5A623,color:#000
+```
+
+---
+
+### 4. REST API Endpoints & Data Models
+Shows the three main API endpoints and their request/response models:
+
+```mermaid
+graph TB
+    Client["REST API Client"]
+    
+    subgraph "NotificationController<br/>/notification-service"
+        subgraph "POST Endpoints"
+            EP1["POST /send<br/>sendNotification()"]
+        end
+        
+        subgraph "GET Endpoints"
+            EP2["GET /user/{id}<br/>getUserNotifications()"]
+            EP3["GET /status/{id}<br/>getStatus()"]
+        end
+    end
+    
+    subgraph "Request & Response Models"
+        REQ["NotificationRequest<br/>- channel<br/>- requestId<br/>- recipient<br/>- content"]
+        RESP["NotificationResponse<br/>- notificationId<br/>- status"]
+        STATUS["NotificationStatus<br/>- notificationId<br/>- deliveryStatus<br/>- timestamp"]
+        USER["UserNotification<br/>- userId<br/>- notifications[]"]
+    end
+    
+    subgraph "Return Values"
+        GR["GenericResponse<T><br/>- success: boolean<br/>- data: T<br/>- error: String"]
+    end
+    
+    Client -->|POST| EP1
+    Client -->|GET| EP2
+    Client -->|GET| EP3
+    
+    EP1 --> REQ
+    EP1 --> RESP
+    EP1 --> GR
+    
+    EP2 --> USER
+    EP2 --> GR
+    
+    EP3 --> STATUS
+    EP3 --> GR
+    
+    style EP1 fill:#52C41A,color:#fff
+    style EP2 fill:#1890FF,color:#fff
+    style EP3 fill:#1890FF,color:#fff
+    style GR fill:#722ED1,color:#fff
+```
+
+---
+
+### 5. Database Schema - Entity Relationships
+Shows the relationships between core entities and their properties:
+
+```mermaid
+erDiagram
+    NOTIFICATION_LOG ||--o{ USER : "belongs_to"
+    NOTIFICATION_LOG ||--o{ NOTIFICATION_TEMPLATE : "uses"
+    CONFIG ||--|  CONFIG_KEY : "references"
+    NOTIFICATION_LOG {
+        bigint id PK
+        string notification_id UK
+        string request_id UK
+        bigint user_id FK
+        string channel
+        string provider
+        string recipient
+        string subject
+        string body
+        string state
+        string error_message
+        timestamp created_at
+        timestamp updated_at
+    }
+    USER {
+        bigint id PK
+        string email UK
+        string phone UK
+        string name
+        boolean active
+        timestamp created_at
+    }
+    NOTIFICATION_TEMPLATE {
+        bigint id PK
+        string template_name UK
+        string channel
+        string subject
+        string body
+        text template_content
+        string status
+        timestamp created_at
+    }
+    CONFIG {
+        bigint id PK
+        string config_key UK
+        text config_value
+        string description
+        timestamp created_at
+        timestamp updated_at
+    }
+    CONFIG_KEY {
+        string key_name PK
+        string description
+    }
+```
+
+---
+
+### 6. Request Processing Flow - Deduplication & Fallback
+Detailed flowchart showing the complete request handling logic including duplicate detection and provider fallback:
+
+```mermaid
+flowchart TD
+    A["Incoming Notification Request"]
+    A --> B["Extract requestId from Request"]
+    B --> C{Check if requestId<br/>already processed?}
+    
+    C -->|Yes - Duplicate Found| D["Return Cached Response"]
+    D --> E["Prevent Duplicate Send"]
+    
+    C -->|No - New Request| F["Determine Notification Channel"]
+    F --> G{Valid Channel?}
+    
+    G -->|No| H["Throw ValidationException"]
+    H --> I["Return FAILURE Status"]
+    
+    G -->|Yes| J["Get ChannelFactory"]
+    J --> K["Get Channel Service<br/>Email/SMS/WhatsApp"]
+    K --> L["Get Provider from Config"]
+    L --> M["Select Enabled Providers<br/>Sorted by Rank"]
+    
+    M --> N["Provider Fallback Loop"]
+    N --> O["Try First Provider"]
+    O --> P{Success?}
+    
+    P -->|Yes| Q["Return Success Result"]
+    Q --> R["Log Notification"]
+    R --> S["Save to Database"]
+    
+    P -->|No| T{More Providers?}
+    T -->|Yes| U["Try Next Provider<br/>in Fallback"]
+    U --> O
+    
+    T -->|No| V["All Providers Failed"]
+    V --> W["Return FAILURE Status"]
+    W --> R
+    
+    S --> X["Return NotificationResponse<br/>with notificationId"]
+    W --> X
+    E --> X
+    I --> X
+    
+    X --> Y["End"]
+    
+    style A fill:#4A90E2,color:#fff
+    style C fill:#F5A623,color:#000
+    style G fill:#F5A623,color:#000
+    style E fill:#52C41A,color:#fff
+    style N fill:#7B68EE,color:#fff
+    style P fill:#F5A623,color:#000
+    style T fill:#F5A623,color:#000
+    style X fill:#52C41A,color:#fff
+```
+
+---
+
+### 7. Service Layer Architecture & Dependencies
+Comprehensive view of the service layer showing dependencies and integration points:
+
+```mermaid
+graph TB
+    subgraph "External Integrations"
+        AWS["AWS SDK<br/>SES / SNS"]
+        TWILIO["Twilio SDK<br/>SMS / WhatsApp"]
+        MYSQL["MySQL Driver"]
+    end
+    
+    subgraph "Core Domain - Notification Service"
+        NS["NotificationService<br/>(Main Orchestrator)"]
+        NLS["NotificationLogService<br/>(Logging & Auditing)"]
+        PSS["ProviderSelectionService<br/>(Provider Selection)"]
+        CCS["ConfigCacheService<br/>(Configuration Cache)"]
+        EHO["GlobalExceptionHandler<br/>(Error Handling)"]
+    end
+    
+    subgraph "Abstraction Layer - Channels"
+        IFACE["NotificationChannelService<br/>(Interface)"]
+        ECS["EmailChannelService"]
+        SMCS["SmsChannelService"]
+        WACS["WhatsAppChannelService"]
+        
+        IFACE --> ECS
+        IFACE --> SMCS
+        IFACE --> WACS
+    end
+    
+    subgraph "Abstraction Layer - Providers"
+        PFACE["NotificationProviderService<br/>(Interface)"]
+        AWSE["AwsEmailProviderService"]
+        AWSS["AwsSmsProviderService"]
+        TWSMS["TwilioSmsProviderService"]
+        TWWA["TwilioWhatsAppProviderService"]
+        
+        PFACE --> AWSE
+        PFACE --> AWSS
+        PFACE --> TWSMS
+        PFACE --> TWWA
+    end
+    
+    subgraph "Data Access Layer"
+        NLR["NotificationLogRepository"]
+        UR["UserRepository"]
+        CR["ConfigRepository"]
+        NTR["NotificationTemplateRepository"]
+    end
+    
+    subgraph "Factories"
+        CF["ChannelFactory"]
+        PF["ProviderFactory"]
+    end
+    
+    NS -->|Uses| CF
+    NS -->|Uses| PF
+    NS -->|Uses| NLS
+    NS -->|Uses| PSS
+    
+    CF -->|Creates| IFACE
+    PF -->|Creates| PFACE
+    
+    ECS -->|Delegates to| AWSE
+    SMCS -->|Delegates to| AWSS
+    SMCS -->|Delegates to| TWSMS
+    WACS -->|Delegates to| TWWA
+    
+    PSS -->|Uses| CCS
+    CCS -->|Uses| CR
+    
+    NLS -->|Uses| NLR
+    NS -->|Uses| NLR
+    NS -->|Uses| UR
+    
+    AWSE -->|Calls| AWS
+    AWSS -->|Calls| AWS
+    TWSMS -->|Calls| TWILIO
+    TWWA -->|Calls| TWILIO
+    
+    NLR -->|Persists| MYSQL
+    UR -->|Persists| MYSQL
+    CR -->|Persists| MYSQL
+    NTR -->|Persists| MYSQL
+    
+    EHO -->|Catches Exceptions| NS
+    
+    style NS fill:#4A90E2,color:#fff
+    style IFACE fill:#52C41A,color:#fff
+    style PFACE fill:#52C41A,color:#fff
+    style CF fill:#722ED1,color:#fff
+    style PF fill:#722ED1,color:#fff
+    style EHO fill:#F5A623,color:#000
+```
+
+---
+
+## �🗄️ Database Schema
 
 All entities extend `BaseEntity` which provides audit fields (`createdAt`, `updatedAt`).
 
@@ -813,7 +1295,7 @@ mvn spring-boot:run
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is for educational and portfolio purposes.
 
 ---
 
