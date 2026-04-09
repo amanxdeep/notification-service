@@ -36,7 +36,6 @@ The Notification Service is a production-ready microservice designed to handle n
 - **Factory Pattern:** ChannelFactory and ProviderFactory for extensible channel/provider creation
 - **Strategy Pattern:** NotificationChannelService implementations for different channels
 - **Service Layer Architecture:** Clean separation of concerns with dedicated service classes
-- **Caching Strategy:** Redis-based configuration caching for optimized performance
 - **Error Handling:** Global exception handler with custom exception hierarchy
 
 ### 💻 Technology Stack
@@ -44,7 +43,6 @@ The Notification Service is a production-ready microservice designed to handle n
 - **Database:** MySQL 8.0 with Hibernate ORM
 - **Cloud Services:** AWS SDK (SES for Email, SNS for SMS)
 - **Third-Party APIs:** Twilio SDK (SMS & WhatsApp)
-- **Caching:** Redis (configuration caching)
 - **Message Queue:** Kafka (infrastructure ready for async processing)
 - **APIs & Documentation:** SpringDoc OpenAPI/Swagger 3.0
 - **Build Tool:** Maven 3.6+
@@ -60,7 +58,6 @@ Before working with this project, ensure you have the following installed:
 - **Java 21** - [Download from Oracle](https://www.oracle.com/java/technologies/downloads/#java21)
 - **Maven 3.6+** - [Installation Guide](https://maven.apache.org/install.html)
 - **MySQL 8.0+** - [Download MySQL](https://dev.mysql.com/downloads/mysql/)
-- **Redis (Optional)** - For configuration caching
 - **Git** - For version control
 
 ### Third-Party Credentials (Optional)
@@ -304,7 +301,7 @@ notification-service/
 │   │   │   │   │   ├── SmsChannelService.java
 │   │   │   │   │   └── WhatsAppChannelService.java
 │   │   │   │   └── NotificationChannelService.java
-│   │   │   ├── config/                           # Configuration classes for AWS, Twilio, Kafka, Redis
+│   │   │   ├── config/                           # Configuration classes for AWS, Twilio, Kafka
 │   │   │   │   ├── AwsSesConfig.java
 │   │   │   │   ├── AwsSnsConfig.java
 │   │   │   │   ├── TwilioConfig.java
@@ -429,7 +426,6 @@ Comprehensive audit and tracking:
 
 ### 💾 ConfigCacheService
 Performance optimization:
-- Caches provider configurations in Redis
 - Reduces database hits for frequently accessed configuration
 - Automatic cache invalidation strategies
 - Minimizes latency for provider selection decisions
@@ -957,17 +953,12 @@ mvn spring-boot:run
    - Use connection pooling (HikariCP configured by default)
    - Regular cleanup of old notification logs
 
-2. **Caching:**
-   - Redis caching for provider configurations
-   - Reduce repeated database calls
-   - TTL configuration for cache expiration
-
-3. **Provider Selection:**
+2. **Provider Selection:**
    - Cache provider rankings
    - Pre-warm cache on startup
    - Monitor provider latencies
 
-4. **Async Processing (Future):**
+3. **Async Processing (Future):**
    - Integrate Kafka for asynchronous notification sending
    - Decouple API response from actual delivery
    - Implement retry mechanisms for failed deliveries
