@@ -106,11 +106,6 @@ twilio.account-sid=YOUR_ACCOUNT_SID
 twilio.auth-token=YOUR_AUTH_TOKEN
 twilio.phone-number=YOUR_TWILIO_NUMBER
 
-# Redis Configuration (for caching)
-spring.data.redis.host=localhost
-spring.data.redis.port=6379
-```
-
 ### 4️⃣ Build the Project
 
 ```bash
@@ -752,8 +747,6 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
       AWS_REGION: ${AWS_REGION}
       AWS_SES_ACCESS_KEY: ${AWS_SES_ACCESS_KEY}
       AWS_SES_SECRET_KEY: ${AWS_SES_SECRET_KEY}
@@ -761,8 +754,6 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
     depends_on:
       mysql:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - notification-network
@@ -784,23 +775,8 @@ services:
     networks:
       - notification-network
 
-  redis:
-    image: redis:7-alpine
-    container_name: notification-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      timeout: 20s
-      retries: 10
-    networks:
-      - notification-network
-
 volumes:
   mysql_data:
-  redis_data:
 
 networks:
   notification-network:
@@ -868,14 +844,6 @@ spring.datasource.password=secure_password
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=false
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
-```
-
-### Redis Configuration (Optional)
-```properties
-spring.data.redis.host=localhost
-spring.data.redis.port=6379
-spring.data.redis.timeout=2000
-spring.cache.type=redis
 ```
 
 ### AWS SES Configuration
@@ -970,19 +938,15 @@ logging.level.com.axd.notificationService=DEBUG
 ### Issue: Configuration Not Loading
 **Solution:**
 ```bash
-# Clear Redis cache if using caching
-redis-cli FLUSHDB
-
 # Restart application
 mvn spring-boot:run
 ```
 
 ### Issue: Slow Notification Sending
 **Optimization:**
-1. Enable Redis caching for configurations
-2. Reduce database query count by using indexes
-3. Monitor provider response times
-4. Consider asynchronous processing with Kafka
+1. Reduce database query count by using indexes
+2. Monitor provider response times
+3. Consider asynchronous processing with Kafka
 
 ---
 
