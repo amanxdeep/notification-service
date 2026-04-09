@@ -24,8 +24,7 @@ The Notification Service is a production-ready microservice designed to handle n
 - **WhatsApp Channel:** Twilio (Rich media & interactive templates)
 
 ### 🚀 Core Capabilities
-- **Template-Based Notifications:** Pre-configured templates with dynamic variable substitution
-- **Direct Content Delivery:** Send custom messages without templates
+- **Direct Content Delivery:** Send custom messages with full control over content
 - **Request Deduplication:** Prevent duplicate sends using unique `requestId`
 - **Intelligent Provider Selection:** Automatic ranking and provider selection with fallback mechanisms
 - **Notification History:** Complete audit trail of all sent notifications
@@ -150,25 +149,9 @@ All endpoints are prefixed with `/notification-service/notifications`
 
 **POST** `/notifications/send`
 
-Send a notification via specified channel with template-based or direct content.
+Send a notification via specified channel with direct content.
 
-**Template-Based Example:**
-```json
-{
-  "requestId": "req-unique-12345",
-  "userId": 1,
-  "type": "TEMPLATE_BASED",
-  "channel": "EMAIL",
-  "data": {
-    "templateId": "welcome_email",
-    "userName": "John Doe",
-    "activationLink": "https://example.com/activate",
-    "recipientEmail": "john@example.com"
-  }
-}
-```
-
-**Direct Content Example:**
+**Example Request:**
 ```json
 {
   "requestId": "req-unique-67890",
@@ -311,7 +294,7 @@ notification-service/
 │   │   │   ├── enums/                            # Enumeration classes
 │   │   │   │   ├── NotificationChannel.java      # EMAIL, SMS, WHATSAPP
 │   │   │   │   ├── NotificationProvider.java     # AWS_SES, TWILIO_SMS, etc.
-│   │   │   │   ├── NotificationType.java         # TEMPLATE_BASED, DIRECT_CONTENT
+│   │   │   │   ├── NotificationType.java         # DIRECT_CONTENT (only currently supported)
 │   │   │   │   ├── NotificationRequestStatus.java
 │   │   │   │   └── LogContextKey.java
 │   │   │   ├── exceptions/                       # Exception handling
@@ -393,7 +376,7 @@ Abstract contract defining:
 - Interface for all communication channel implementations
 - Three core implementations: `EmailChannelService`, `SmsChannelService`, `WhatsAppChannelService`
 - Delegation to `ProviderSelectionService` for intelligent provider selection
-- Support for both template-based and direct content delivery
+- Support for direct content delivery (template-based notifications coming in future)
 
 ### 🏭 Factory Pattern Implementation
 **ChannelFactory:**
@@ -453,7 +436,7 @@ public class NotificationLog extends BaseEntity {
     private String notificationId;         // UUID generated for each notification
     private Long userId;                   // Recipient user
     private String eventId;                // Business event identifier
-    private String type;                   // TEMPLATE_BASED or DIRECT_CONTENT
+    private String type;                   // DIRECT_CONTENT (TEMPLATE_BASED coming soon)
     private String channel;                // EMAIL, SMS, or WHATSAPP
     private String provider;               // AWS_SES, TWILIO_SMS, POSTMARK, etc.
     private String providerNotificationId; // Provider's response ID for tracking
@@ -473,7 +456,7 @@ public class NotificationTemplate extends BaseEntity {
     private String bodyTemplate; // Template body with placeholders: {{userName}}, {{link}}, etc.
 }
 ```
-Stores reusable notification templates with dynamic variable placeholders.
+⚠️ **Note:** Template-based notifications are currently planned for future implementation. This entity structure is prepared for the feature.
 
 ### ConfigEntity (Configuration)
 ```java
@@ -573,7 +556,7 @@ The complete request lifecycle from API entry to delivery:
    │  ├─ providerNotificationId (external reference)
    │  └─ state (SUCCESS, FAILURE, PENDING)
    ↓
-8. Return Success Response
+8. Return Response
    {
      "success": true,
      "data": {
@@ -598,10 +581,10 @@ The application uses **SLF4J with Logback** for structured logging:
 
 ### Example Log Output
 ```
-2026-03-03 10:30:00.123 INFO  [NotificationService] Received notification request: requestId=welcome-email-001
-2026-03-03 10:30:00.125 DEBUG [NotificationService] De-duplication check: requestId=welcome-email-001 not found
-2026-03-03 10:30:00.130 INFO  [ProviderSelectionService] Selected providers for EMAIL: [AWS_SES (rank 1), POSTMARK (rank 2)]
-2026-03-03 10:30:00.500 INFO  [AwsEmailProviderService] Successfully sent email via AWS SES. Message: <message-id>
+2026-03-03 10:30:00.123 INFO  [NotificationService] Received notification request: requestId=sms-001
+2026-03-03 10:30:00.125 DEBUG [NotificationService] De-duplication check: requestId=sms-001 not found
+2026-03-03 10:30:00.130 INFO  [ProviderSelectionService] Selected providers for SMS: [TWILIO (rank 1), AWS_SNS (rank 2)]
+2026-03-03 10:30:00.500 INFO  [TwilioSmsProviderService] Successfully sent SMS via Twilio. Message: <message-id>
 2026-03-03 10:30:00.502 INFO  [NotificationLogService] Logged notification: notificationId=550e8400...
 ```
 
@@ -853,6 +836,7 @@ For questions or issues, please:
 
 ## 🎯 Future Roadmap & Improvements
 
+- [ ] **Template-Based Notifications** - Pre-configured templates with dynamic variable substitution
 - [ ] **Kafka Integration** - Asynchronous notification processing
 - [ ] **WebSocket Support** - Real-time notification delivery status
 - [ ] **Rate Limiting** - Per-user and per-provider rate limiting
