@@ -43,7 +43,6 @@ The Notification Service is a production-ready microservice designed to handle n
 - **Database:** MySQL 8.0 with Hibernate ORM
 - **Cloud Services:** AWS SDK (SES for Email, SNS for SMS)
 - **Third-Party APIs:** Twilio SDK (SMS & WhatsApp)
-- **Message Queue:** Kafka (infrastructure ready for async processing)
 - **APIs & Documentation:** SpringDoc OpenAPI/Swagger 3.0
 - **Build Tool:** Maven 3.6+
 - **Code Generation:** Project Lombok
@@ -301,11 +300,10 @@ notification-service/
 │   │   │   │   │   ├── SmsChannelService.java
 │   │   │   │   │   └── WhatsAppChannelService.java
 │   │   │   │   └── NotificationChannelService.java
-│   │   │   ├── config/                           # Configuration classes for AWS, Twilio, Kafka
+│   │   │   ├── config/                           # Configuration classes for AWS, Twilio
 │   │   │   │   ├── AwsSesConfig.java
 │   │   │   │   ├── AwsSnsConfig.java
 │   │   │   │   ├── TwilioConfig.java
-│   │   │   │   ├── KafkaConfig.java
 │   │   │   │   ├── WebClientConfig.java
 │   │   │   │   └── NotificationChannelConfig.java
 │   │   │   ├── controller/                       # REST Controllers
@@ -942,7 +940,6 @@ mvn spring-boot:run
 **Optimization:**
 1. Reduce database query count by using indexes
 2. Monitor provider response times
-3. Consider asynchronous processing with Kafka
 
 ---
 
