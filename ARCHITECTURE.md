@@ -12,7 +12,7 @@ This document provides comprehensive visual representations of the Notification 
 4. [Factory Pattern Implementation](#4-factory-pattern-implementation)
 5. [Service Layer Architecture](#5-service-layer-architecture)
 6. [REST API Endpoints](#6-rest-api-endpoints)
-7. [Database Schema](#7-database-schema)
+7. [Database Schema Overview](#7-database-schema-overview)
 8. [Provider Fallback Logic](#8-provider-fallback-logic)
 
 ---
@@ -558,7 +558,7 @@ graph TB
 
 ---
 
-## 7. Database Schema
+## 7. Database Schema Overview
 
 Entity-Relationship diagram showing all database tables and their relationships.
 
