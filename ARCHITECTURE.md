@@ -560,13 +560,151 @@ graph TB
 
 ## 7. Database Schema Overview
 
-Entity-Relationship diagram showing all database tables and their relationships.
+This section provides an overview of the core database entities and their relationships.
+
+### Core Entities
+
+#### NOTIFICATION_LOG (Primary Audit Entity)
+The central entity for tracking all notification attempts and delivery status.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | PK | Primary key, auto-incremented |
+| `notification_id` | string | UK | UUID unique identifier for tracking |
+| `request_id` | string | UK | Client-provided ID for deduplication |
+| `user_id` | bigint | FK | Reference to USER entity |
+| `channel` | string | - | EMAIL, SMS, or WHATSAPP |
+| `provider` | string | - | AWS_SES, TWILIO, AWS_SNS, POSTMARK |
+| `recipient` | string | - | Email address, phone number, or WhatsApp ID |
+| `subject` | string | - | Subject/message title |
+| `body` | text | - | Message content |
+| `state` | string | - | SUCCESS, FAILURE, PENDING |
+| `error_message` | string | - | Error details if failed |
+| `created_at` | timestamp | - | Automatic creation timestamp |
+| `updated_at` | timestamp | - | Automatic update timestamp |
+
+**Purpose**: Maintains complete audit trail of all notification attempts for compliance, debugging, and status tracking.
+
+---
+
+#### USER Entity
+Stores recipient information for notification tracking.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | PK | Primary key, auto-incremented |
+| `name` | string | - | User's full name |
+| `email` | string | UK | Unique email address |
+| `phone` | string | UK | Unique phone number |
+| `active` | boolean | - | User account status |
+| `created_at` | timestamp | - | Account creation date |
+
+**Purpose**: Maintains user profile information referenced by notification logs.
+
+---
+
+#### NOTIFICATION_TEMPLATE Entity
+Pre-defined message templates with variable placeholders (prepared for future template-based notifications).
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | PK | Primary key, auto-incremented |
+| `template_name` | string | UK | Unique template identifier |
+| `channel` | string | - | EMAIL, SMS, or WHATSAPP |
+| `subject` | string | - | Email/notification subject |
+| `body` | text | - | Template body with placeholders {{var}} |
+| `template_content` | text | - | Full template JSON |
+| `status` | string | - | ACTIVE, INACTIVE, DEPRECATED |
+| `created_at` | timestamp | - | Template creation date |
+
+**Purpose**: Stores reusable message templates for template-based notifications (future feature).
+
+**Example Template**:
+```
+Template Name: WELCOME_EMAIL
+Channel: EMAIL
+Subject: Welcome {{userName}}!
+Body: Dear {{userName}}, thank you for joining us...
+```
+
+---
+
+#### CONFIG Entity
+Dynamic configuration storage for provider settings and ranks.
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | PK | Primary key, auto-incremented |
+| `config_key` | string | UK | Configuration key identifier |
+| `config_value` | text | - | Configuration value (often JSON) |
+| `description` | string | - | Configuration description |
+| `created_at` | timestamp | - | Configuration creation date |
+| `updated_at` | timestamp | - | Last modification date |
+
+**Purpose**: Stores dynamic configurations without code changes, including provider rankings and enabled states.
+
+**Example Configuration**:
+```json
+{
+  "config_key": "EMAIL_PROVIDERS",
+  "config_value": {
+    "providers": [
+      {
+        "name": "AWS_SES",
+        "enabled": true,
+        "rank": 1
+      },
+      {
+        "name": "POSTMARK",
+        "enabled": true,
+        "rank": 2
+      }
+    ]
+  }
+}
+```
+
+---
+
+### Entity Relationships
+
+```
+USER (1) ──────────────────── (N) NOTIFICATION_LOG
+         
+NOTIFICATION_TEMPLATE (1) ──────────────────── (N) NOTIFICATION_LOG (optional)
+
+CONFIG (stores) provider rankings and settings for use by ProviderSelectionService
+```
+
+### Indexing Strategy
+
+For optimal query performance, create indexes on:
+
+```sql
+-- Deduplication lookup
+CREATE INDEX idx_notification_log_request_id ON notification_log(request_id);
+
+-- User history queries
+CREATE INDEX idx_notification_log_user_id ON notification_log(user_id);
+
+-- Status tracking
+CREATE INDEX idx_notification_log_notification_id ON notification_log(notification_id);
+
+-- Provider performance analysis
+CREATE INDEX idx_notification_log_provider ON notification_log(provider, state);
+
+-- Time-based queries
+CREATE INDEX idx_notification_log_created_at ON notification_log(created_at);
+```
+
+---
+
+### Database Schema Diagram
 
 ```mermaid
 erDiagram
-    NOTIFICATION_LOG ||--o{ USER : "belongs_to"
+    NOTIFICATION_LOG ||--o{ USER : "references"
     NOTIFICATION_LOG ||--o{ NOTIFICATION_TEMPLATE : "uses"
-    CONFIG ||--|  CONFIG_KEY : "references"
     
     NOTIFICATION_LOG {
         bigint id PK
@@ -612,36 +750,23 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
-    
-    CONFIG_KEY {
-        string key_name PK
-        string description
-    }
 ```
 
-### Entity Descriptions:
+### Data Retention & Cleanup
 
-**NOTIFICATION_LOG** (Core Audit Entity)
-- `notification_id`: UUID unique identifier for each notification
-- `request_id`: Client-provided ID for deduplication and idempotency
-- `user_id`: Recipient user reference (foreign key)
-- `channel`: EMAIL, SMS, or WHATSAPP
-- `provider`: AWS_SES, TWILIO, AWS_SNS, etc.
-- `state`: SUCCESS, FAILURE, PENDING
-- Timestamps: created_at, updated_at (audit fields)
+- **NOTIFICATION_LOG**: Keep for 90 days or longer for compliance
+- **USER**: Keep indefinitely unless user requests deletion
+- **NOTIFICATION_TEMPLATE**: Keep active/deprecated versions for reference
+- **CONFIG**: Keep as is, configurations are historical
 
-**USER**
-- Stores recipient information
-- Email and phone are unique to enable lookups
+**Cleanup Strategy**:
+```sql
+-- Archive old notification logs (quarterly)
+DELETE FROM notification_log WHERE created_at < DATE_SUB(NOW(), INTERVAL 90 DAY);
 
-**NOTIFICATION_TEMPLATE**
-- Predefined message templates with variable placeholders
-- Prepared for template-based notifications (future feature)
-
-**CONFIG**
-- Dynamic configuration storage
-- Stores provider rankings, enabled/disabled states
-- JSON values for complex configurations
+-- Verify user still active before cleanup
+DELETE FROM user WHERE active = false AND updated_at < DATE_SUB(NOW(), INTERVAL 1 YEAR);
+```
 
 ---
 
