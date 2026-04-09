@@ -24,7 +24,6 @@ The Notification Service is a microservice designed to handle notification deliv
   - Request deduplication using `requestId` to prevent duplicate sends
   - Notification history and detailed logging
   - Provider selection with configurable rankings and fallback mechanisms
-  - Configuration management with Redis caching for high performance
   - User notification tracking and status retrieval
   - Support for both template-based and direct content notifications
 
@@ -185,7 +184,6 @@ notification-service/
 │   │   │   │   ├── AwsSesConfig.java
 │   │   │   │   ├── AwsSnsConfig.java
 │   │   │   │   ├── TwilioConfig.java
-│   │   │   │   ├── RedisConfig.java
 │   │   │   │   ├── KafkaConfig.java
 │   │   │   │   └── WebClientConfig.java
 │   │   │   ├── controller/
@@ -277,10 +275,6 @@ notification-service/
 - Filters enabled providers and sorts by rank
 - Implements fallback mechanism - if primary provider fails, tries next in rank
 
-### ConfigCacheService
-- Manages configuration caching with Redis
-- Eliminates repeated database queries for provider configurations
-- Supports cache invalidation and refresh
 
 ### NotificationLogService
 - Logs all notification attempts and their outcomes
@@ -480,7 +474,6 @@ services:
       TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
     depends_on:
       - mysql
-      - redis
 
   mysql:
     image: mysql:8.0
@@ -489,11 +482,6 @@ services:
       MYSQL_DATABASE: notification_db
     volumes:
       - mysql_data:/var/lib/mysql
-
-  redis:
-    image: redis:7.0-alpine
-    ports:
-      - "6379:6379"
 
 volumes:
   mysql_data:
